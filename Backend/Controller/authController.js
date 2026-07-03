@@ -56,10 +56,10 @@ try{
     const {email , password } = req.body;
     console.log("data recived" ,email , password);
 
-    if(!email || password){
+    if(!email || !password){
            return res.status(400).json({"message": "All fields are required"});
     }
-    const user = user.findOne({email}).select("+password");
+    const user = await  userSchema.findOne({email}).select("+password");
     if(!user){
       return res.status(400).json({"message": " User doesn't exists"});
 
@@ -71,14 +71,14 @@ try{
     }
 
     const payload = {
-      user = user._id,
-      email = user.email,
-      password = user.password
+      user : user._id,
+      email : user.email,
+      password : user.password
 
 
     }
 
-    const token = jwt.sign(payload , process.env.secret_key{
+    const token = jwt.sign(payload , process.env.secret_key ,{
       expiresIn : "7d"
     });
 

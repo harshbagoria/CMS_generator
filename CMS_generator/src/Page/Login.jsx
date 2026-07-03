@@ -17,7 +17,12 @@ const Login = () => {
 
         try {
             setIsSubmitting(true);
-            await login({ email, password });
+         const res =    await login({ email, password });
+           // debugger
+
+            const token = res?.data?.token;
+            localStorage.setItem("token",token);
+
         } catch (error) {
             console.error("Login failed", error);
         } finally {
