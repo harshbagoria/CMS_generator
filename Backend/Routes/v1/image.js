@@ -1,12 +1,13 @@
 import express from 'express';
 import { Router } from 'express';
-import { image } from '../../Controller/image';
-import {auth} from '../../Middleware/auth.js';
+import {generateImage} from '../../Controller/image.js';
+//import {auth} from '../../Middleware/auth.js';
+import {auth} from '../../Middleware/Auth.js';
 
 
 const router = Router();
 
-router.post("/image", auth, image);
+router.post("/generate",auth, generateImage);
 
 
 export default router;

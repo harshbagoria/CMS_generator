@@ -5,9 +5,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-
-console.log("secretkey", process.env.secret_key);
-
 export const Signup = async(req, res) => {
 try{
    console.log("sighup ");
@@ -51,7 +48,7 @@ try{
 
  }
 
- export const Login = async(req ,res) =>{
+ export const Login1 = async(req ,res) =>{
   try{
     const {email , password } = req.body;
     console.log("data recived" ,email , password);
@@ -71,7 +68,7 @@ try{
     }
 
     const payload = {
-      user : user._id,
+      userId : user._id,
       email : user.email,
       password : user.password
 

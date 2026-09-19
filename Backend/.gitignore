@@ -1,0 +1,32 @@
+# Dependencies
+node_modules
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+*.crt
+*.pfx
+credentials.json
+serviceAccount*.json
+secrets.json
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Generated / local files
+image.png
+uploads
+tmp
+temp
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea
+.vscode

@@ -3,6 +3,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Signup from './Page/Signup';
 import Login from './Page/Login';
+import GenerateImage from './Page/generateimage';
 
 
 export default function App() {
@@ -12,8 +13,9 @@ export default function App() {
     <Route path='/' element  = {<div>home</div>}/>
     
     
-   <Route path="/Signup" element={<Signup />} />
-   <Route path="/Login" element={<Login />} />
+   <Route path="/signup" element={<Signup />} />
+   <Route path="/login" element={<Login />} />
+   <Route path = "/generateimage" element = {<GenerateImage/>}/>
    </Routes>
    </BrowserRouter>
   )
