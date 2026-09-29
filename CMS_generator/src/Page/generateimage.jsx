@@ -161,6 +161,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import zod from 'zod';
 import { useState } from 'react';
 import { generatedImage } from '../services/Image';
+import { downloadImage} from '../Utils/global';
 
 const schema = zod.object({
     resolution: zod.string().min(1, "Resolution is required"),
@@ -312,7 +313,10 @@ const GenerateImage = () => {
 
                                 <div className="flex items-center gap-3">
                                     <a
-                                        href={generateImage}
+                                       onClick={(e) => {
+                                            e.preventDefault();
+                                            downloadImage(generateImage);
+                                        }}
                                         download="generated_image.png"
                                         className="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white
                                                    font-medium py-2.5 px-4 rounded-lg transition-colors text-sm

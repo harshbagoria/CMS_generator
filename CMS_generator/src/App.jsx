@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Signup from './Page/Signup';
 import Login from './Page/Login';
 import GenerateImage from './Page/generateimage';
+import Rewrite from './Page/Rewrite';
+//import GenerateContent from './Page/GenerateContant';
 
 
 export default function App() {
@@ -16,6 +18,8 @@ export default function App() {
    <Route path="/signup" element={<Signup />} />
    <Route path="/login" element={<Login />} />
    <Route path = "/generateimage" element = {<GenerateImage/>}/>
+   <Route path = "/generatecontent" element = {<Rewrite/>}/>
+  
    </Routes>
    </BrowserRouter>
   )

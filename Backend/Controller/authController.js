@@ -70,13 +70,13 @@ try{
     const payload = {
       userId : user._id,
       email : user.email,
-      password : user.password
+     
 
 
     }
 
     const token = jwt.sign(payload , process.env.secret_key ,{
-      expiresIn : "7d"
+      expiresIn : "17d"
     });
 
   
