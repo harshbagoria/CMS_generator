@@ -15,6 +15,7 @@ const Rewrite = () => {
     const [generatedContent, setGeneratedContent] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [copied, setCopied] = useState(false);
 
     const {
         register,
@@ -46,6 +47,19 @@ const Rewrite = () => {
             setLoading(false);
         }
     };
+
+const handleCopy = async () => {
+  try {
+    await navigator.clipboard.writeText(generatedContent);
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  } catch (error) {
+    console.error("Could not copy content:", error);
+  }
+};
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 py-12 px-4">
@@ -149,7 +163,12 @@ const Rewrite = () => {
                             <div className="space-y-4">
                                 <div className="rounded-lg overflow-hidden border border-slate-200 shadow-sm">
                                     <h1>{generatedContent}</h1>
-                                    
+                                    <button
+                                        onClick={handleCopy}
+                                        className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-2 px-4 rounded-lg transition-colors text-sm shadow-sm shadow-slate-200"
+                                    >
+                                        {copied ? "Copied!" : "Copy Content"}
+                                    </button>
                                 </div>
 
                                 <div className="flex items-center gap-3">
