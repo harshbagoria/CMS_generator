@@ -1,5 +1,5 @@
 import {GoogleGenAI} from '@google/genai';
-import content from '../Models/content';
+import content from '../Models/content.js';
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -59,7 +59,7 @@ const AI = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 
 async function generategiminicontent(prompt) {
   const response = await AI.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.8-flash',
     contents: prompt,
   });
   console.log(response.text);
