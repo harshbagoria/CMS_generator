@@ -1,135 +1,196 @@
-import { InferenceClient } from "@huggingface/inference";
-import dotenv from "dotenv";
-import { writeFileSync, appendFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { RESOLUTION_MAP } from "../Utils/Constant.js";
-import cloudinary from "cloudinary";
+﻿import dotenv from "dotenv";
 import Image from "../Models/image.js";
-
 
 dotenv.config();
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const DEBUG_LOG = join(__dirname, '..', '..', 'debug-2b0719.log');
-const agentLog = (payload) => {
-  // #region agent log
-  const line = JSON.stringify({ sessionId: '2b0719', timestamp: Date.now(), ...payload });
-  try { appendFileSync(DEBUG_LOG, line + '\n'); } catch (_) {}
-  fetch('http://127.0.0.1:7432/ingest/3732173b-59b0-45d3-9d20-e063cecbe55e',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'2b0719'},body:line}).catch(()=>{});
-  // #endregion
+const DEFAULT_IMAGE_MODEL = "black-forest-labs/flux.1-schnell";
+const DEFAULT_IMAGE_SIZE = "1024x1024";
+const MAX_PROMPT_LENGTH = 2000;
+const MAX_IMAGE_DIMENSION = 4096;
+const IMAGE_REQUEST_TIMEOUT_MS = 120_000;
+const POLLINATIONS_IMAGE_ENDPOINT =
+  "https://gen.pollinations.ai/v1/images/generations";
+
+class PollinationsError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
+export const generateImage = async (req, res) => {
+  const body = req.body ?? {};
+  const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+
+  if (!prompt) {
+    return res.status(400).json({ error: "A prompt is required." });
+  }
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    return res
+      .status(400)
+      .json({ error: `Prompt must be ${MAX_PROMPT_LENGTH} characters or fewer.` });
+  }
+
+  const size = body.size ?? DEFAULT_IMAGE_SIZE;
+  if (
+    typeof size !== "string" ||
+    !/^([1-9]\d{0,3})x([1-9]\d{0,3})$/.test(size) ||
+    size.split("x").some((dimension) => Number(dimension) > MAX_IMAGE_DIMENSION)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "Size must use WIDTHxHEIGHT format, such as 1024x1024." });
+  }
+
+  const configuredModel =
+    process.env.POLLINATIONS_IMAGE_MODEL?.trim() || DEFAULT_IMAGE_MODEL;
+  const model = body.model ?? configuredModel;
+  if (typeof model !== "string" || !model.trim() || model.trim().length > 200) {
+    return res.status(400).json({ error: "Model must be a non-empty string." });
+  }
+
+  const apiKey = process.env.POLLINATIONS_API_KEY?.trim();
+  if (!apiKey) {
+    return res
+      .status(503)
+      .json({ error: "Image generation is not configured on the server." });
+  }
+
+  try {
+    const imageUrl = await requestPollinationsImage({
+      prompt,
+      size,
+      model: model.trim(),
+      apiKey,
+    });
+
+    await Image.create({
+      imageUrl,
+      prompt,
+      userId: req.userId,
+    });
+
+    return res.status(200).json({ imageUrl });
+  } catch (error) {
+    if (error instanceof PollinationsError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    console.error("Image generation or history storage failed:", error);
+    return res.status(500).json({ error: "Unable to generate the image." });
+  }
 };
 
-const client = new InferenceClient(process.env.AI_API_KEY);
-//console.log("API key", process.env.AI_API_KEY);
+async function requestPollinationsImage({ prompt, size, model, apiKey }) {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    IMAGE_REQUEST_TIMEOUT_MS,
+  );
 
+  try {
+    const response = await fetch(POLLINATIONS_IMAGE_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        prompt,
+        size,
+        n: 1,
+        response_format: "url",
+      }),
+      signal: controller.signal,
+    });
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-
-
-// const image = await client.textToImage({
-//     // provider: "auto",
-//     // model: "black-forest-labs/FLUX.1-schnell",
-// 	// inputs: "Astronaut riding a horse",
-	
-
-  
-
-
-
-// });
-/// Use the generated image (it's a Blob)
-export const generateImage = async(req,res)=>{
-    console.log("image genrating start ");
-    try{
-
-        const {prompt, resolution} = req.body;
-        console.log("prompt and resolution", prompt, resolution);
-          if(!prompt || !resolution){
-        return res.status(400).json({"message": "prompt and  resolution are required"});
-
-    }
-        if(!process.env.AI_API_KEY){
-            return res.status(500).json({"message": "AI API key is not configured"});
-            
-        }
-
-
-        console.log(`prompt ${prompt} and resolution is ${resolution}`);
-
-const dimension = RESOLUTION_MAP[resolution] || RESOLUTION_MAP["512x512"];
-console.log("calling  is ", {prompt ,resolution, dimension});
-
- 
-
-
-const image =  await generateimageblob(prompt, dimension);
-const buffer = Buffer.from(await image.arrayBuffer());
-const upload_generated_image = await uploadimage(buffer);
-console.log("upload image result is ", upload_generated_image,req.userId);
-        agentLog({runId:'post-fix',hypothesisId:'A',location:'Controller/image.js:beforeCreate',message:'userId value about to be saved',data:{userIdType:typeof req.userId,isObject:req.userId!==null&&typeof req.userId==='object',userIdString:typeof req.userId==='string'?String(req.userId):undefined,hasCloudinaryUrl:Boolean(upload_generated_image?.secure_url)}});
-
-const result = await Image.create({
-    imageUrl : upload_generated_image.secure_url,
-    prompt : prompt,
-    userId : req.userId
-});
-        agentLog({runId:'post-fix',hypothesisId:'A',location:'Controller/image.js:afterCreate',message:'Image.create succeeded',data:{savedId:String(result?._id||''),savedUserId:String(result?.userId||'')}});
-
-//writeFileSync("image.png", buffer);
-// res.status(200).json({"message": "image generated successfully" , "image": buffer.toString("base64")});
-//res.status(200).set("Content-Type", "image/png").send(buffer);
-
-return res.status(200).json({
-    message: "image generated successfully",
-    image: upload_generated_image.secure_url,
-  });
-
-
-         
-    }catch(error){
-       // agentLog({runId:'post-fix',hypothesisId:'A',location:'Controller/image.js:catch',message:'generateImage failed',data:{errorName:error?.name,errorMessage:error?.message,userIdType:typeof req.userId}});
-        console.error("Error is image generating" , error);
-         return res.status(500).json({"message": "Internal server error"});
-
-
+    if (!response.ok) {
+      const upstreamErrors = {
+        400: "Pollinations rejected the prompt, size, or model.",
+        401: "Pollinations rejected the API key. Check that it is valid and configured.",
+        402: "Pollinations Pollen balance or budget is exhausted.",
+      };
+      throw new PollinationsError(
+        upstreamErrors[response.status] ? response.status : 502,
+        upstreamErrors[response.status] ||
+          "Image generation service returned an error.",
+      );
     }
 
-  
+    let result;
+    try {
+      result = await response.json();
+    } catch (error) {
+      if (error instanceof PollinationsError) {
+        throw error;
+      }
+      if (controller.signal.aborted) {
+        throw new PollinationsError(
+          504,
+          "Image generation timed out. Please try again.",
+        );
+      }
+      throw new PollinationsError(
+        502,
+        "Image generation service returned an invalid response.",
+      );
+    }
 
-    
+    const image = result?.data?.[0];
+    if (typeof image?.url === "string" && image.url.trim()) {
+      let imageUrl;
+      try {
+        imageUrl = new URL(image.url);
+      } catch {
+        throw new PollinationsError(
+          502,
+          "Image generation service returned an invalid image URL.",
+        );
+      }
+      if (imageUrl.protocol === "https:" || imageUrl.protocol === "http:") {
+        return image.url;
+      }
+    }
 
+    if (typeof image?.b64_json === "string" && image.b64_json.trim()) {
+      return `data:image/png;base64,${image.b64_json}`;
+    }
 
-
+    throw new PollinationsError(
+      502,
+      "Image generation service did not return an image.",
+    );
+  } catch (error) {
+    if (error instanceof PollinationsError) {
+      throw error;
+    }
+    if (controller.signal.aborted) {
+      throw new PollinationsError(
+        504,
+        "Image generation timed out. Please try again.",
+      );
+    }
+    throw new PollinationsError(
+      502,
+      "Unable to reach the image generation service.",
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-async function generateimageblob(prompt , dimension) {
-
- return  await client.textToImage({
-      provider: "auto",
-     model: "black-forest-labs/FLUX.1-schnell",
-      inputs: prompt,
-      parameters: { num_inference_steps: 5 , width:dimension.width , height:dimension.height },
-
-	
-    
-})
-}
-
-const uploadimage = async(buffer)=>{
-//const byteArrayBuffer = fs.readFileSync('people.mp4');
-return  await new Promise((resolve, reject) => {
-    cloudinary.v2.uploader.upload_stream({ resource_type: "image"  , folder: "generated_images"}, (error, uploadResult) => {
-        if (error) {
-            return reject(error);
-        }
-        return resolve(uploadResult);
-    }).end(buffer);
-});
-
-}
+export const generateImageHistory = async (req, res) => {
+  try {
+    const images = await Image.find({ userId: req.userId })
+      .select("_id imageUrl prompt")
+      .lean();
+    return res.status(200).json({
+      message: "image generated successfully",
+      images,
+    });
+  } catch (error) {
+    console.error("Unable to load generated image history:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
