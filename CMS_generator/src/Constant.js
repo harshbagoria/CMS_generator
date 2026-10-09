@@ -1,17 +1,16 @@
 export const imageresolution = [
     {
-        value: "512*512",
+        value: "512x512",
         label: "512x512 (square)"
     },
     {
-        value: "1024*1024",
+        value: "1024x1024",
         label: "1024x1024 (square)"
 
     },
     {
-        value: "1024*512",
+        value: "1024x512",
         label: "1024x512 (landscape)"
     }
 
 ];
-

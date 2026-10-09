@@ -6,6 +6,8 @@ import Login from './Page/Login';
 import GenerateImage from './Page/generateimage';
 import Rewrite from './Page/Rewrite';
 //import GenerateContent from './Page/GenerateContant';
+import GeneratedImagehistory from './Page/GeneratedImagehistory';
+
 
 
 export default function App() {
@@ -19,6 +21,7 @@ export default function App() {
    <Route path="/login" element={<Login />} />
    <Route path = "/generateimage" element = {<GenerateImage/>}/>
    <Route path = "/generatecontent" element = {<Rewrite/>}/>
+   <Route path = "/generatedimagehistory" element = {<GeneratedImagehistory/>}/>
   
    </Routes>
    </BrowserRouter>
