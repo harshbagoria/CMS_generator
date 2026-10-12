@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { getGeneratedImageHistory } from '../services/Image';
+import { downloadImage } from '../Utils/global';
 
 const GeneratedImagehistory = () => {
     const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [generatedImage, setGeneratedImage] = useState([]);
+    const [error, setError] = useState(null);
+    const [generatedImage, setGeneratedImage] = useState([]);
+    const [downloadError, setDownloadError] = useState(null);
 
     const loadGeneratedImages = useCallback(async () => {
         setLoading(true);
@@ -17,14 +19,24 @@ const GeneratedImagehistory = () => {
             setError("We couldn't load your image history. Please try again.");
         } finally {
             setLoading(false);
-    }
+        }
     }, []);
 
     useEffect(() => {
         loadGeneratedImages();
     }, [loadGeneratedImages]);
 
-  return (
+    const handleDownload = async (imageUrl, id) => {
+        setDownloadError(null);
+        try {
+            await downloadImage(imageUrl, id);
+        } catch (downloadRequestError) {
+            console.error("Error downloading generated image", downloadRequestError);
+            setDownloadError("We couldn't download this image. Please try again.");
+        }
+    };
+
+    return (
         <main className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 px-4 py-10 sm:py-12">
             <div className="mx-auto max-w-6xl">
                 <header className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -35,7 +47,7 @@ const GeneratedImagehistory = () => {
                         <p className="mt-2 text-sm text-slate-500 sm:text-base">
                             Revisit and download the images you have created.
                         </p>
-          </div>
+                    </div>
                     {!loading && !error && generatedImage.length > 0 && (
                         <span className="text-sm font-medium text-slate-500">
                             {generatedImage.length} {generatedImage.length === 1 ? "image" : "images"}
@@ -100,11 +112,9 @@ const GeneratedImagehistory = () => {
                                     <p className="line-clamp-3 min-h-[4.5rem] text-sm leading-6 text-slate-600" title={item.prompt}>
                                         {item.prompt || "No prompt available"}
                                     </p>
-                                    <a
-                                        href={item.imageUrl}
-                                        download={`generated-image-${item._id || "image"}.jpg`}
-                                        target="_blank"
-                                        rel="noreferrer"
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDownload(item.imageUrl, item._id)}
                                         className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
                                     >
                                         <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
@@ -112,7 +122,10 @@ const GeneratedImagehistory = () => {
                                             <path d="M5 16v4h14v-4" />
                                         </svg>
                                         Download image
-                                    </a>
+                                    </button>
+                                    {downloadError && (
+                                        <p className="text-sm text-red-600" role="alert">{downloadError}</p>
+                                    )}
                                 </div>
                             </article>
                         ))}

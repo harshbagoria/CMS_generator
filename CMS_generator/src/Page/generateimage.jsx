@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import zod from "zod";
 import { imageresolution } from "../Constant";
 import { generatedImage } from "../services/Image";
+import { downloadImage } from '../Utils/global';
 
 const schema = zod.object({
   resolution: zod.string().min(1, "Resolution is required"),
@@ -170,7 +171,7 @@ const GenerateImage = () => {
                   alt="Generated from your prompt"
                   className="h-auto w-full rounded-lg border border-slate-200 object-cover shadow-sm"
                 />
-                <a
+                {/* <a
                   href={imageUrl}
                   download="generated-image.png"
                   target="_blank"
@@ -178,7 +179,13 @@ const GenerateImage = () => {
                   className="inline-flex rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
                 >
                   Download Image
-                </a>
+                </a> */}
+                <button
+                  type="button"
+                  onClick={() => downloadImage(item.imageUrl, item._id)}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700">
+                  Download image
+                </button>
               </div>
             ) : (
               <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-slate-300">

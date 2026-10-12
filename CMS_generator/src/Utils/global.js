@@ -1,23 +1,23 @@
-export const downloadImage = async (image) => {
-    // if we don't have image url then return
-    if (!image) return;
+export const downloadImage = async (image, id) => {
+    if (!image) {
+        throw new Error("An image URL is required to download an image.");
+    }
 
-    const res = await fetch(image);
-    console.log(res);
+    const response = await fetch(image);
+    if (!response.ok) {
+        throw new Error(`Image download failed with status ${response.status}.`);
+    }
 
-    const blob = await res.blob();
-    console.log(blob);
-
+    const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const extension = blob.type.split("/")[1]?.split(";")[0] || "jpg";
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "download.jpg";
+    link.href = url;
+    link.download = `generated-image-${id || "image"}.${extension}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 
-    document.body.appendChild(a);
-
-    a.click();
-    a.remove();
-
-    window.URL.revokeObjectURL(url);
+    window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
 };
