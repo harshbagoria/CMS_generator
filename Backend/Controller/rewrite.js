@@ -1,67 +1,84 @@
-import {GoogleGenAI} from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import content from '../Models/content.js';
 import dotenv from "dotenv";
 dotenv.config();
 
 
 
-const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export const generatecontent = async (req, res) => {
     // const {prompt} = req.body;
 
     try {
-       
-    console.log(`content  generation start ${req.userId}`);
-     const {prompt} = req.body;
-    if(!prompt){
-        return res.status(400).json({"message": "prompt is required"});
 
-    }
-    
+        console.log(`content  generation start ${req.userId}`);
+        const { prompt } = req.body;
+        if (!prompt) {
+            return res.status(400).json({ "message": "prompt is required" });
 
-    const user_prompt = `Rewrite the following content in a more engaging and creative way: ${prompt}`;
+        }
 
 
-     
-    const generated_Result = await generategiminicontent(user_prompt);
+        const user_prompt = `Rewrite the following content in a more engaging and creative way: ${prompt}`;
 
 
 
-
-    const result = content.create({
-        userId: req.userId,
-        Input_prompt: prompt,
-        generated_content: generated_Result,
-        type: "generate"
+        const generated_Result = await generategiminicontent(user_prompt);
 
 
 
 
-    })
+        await content.create({
+            userId: req.userId,
+            Input_prompt: prompt,
+            generated_content: generated_Result,
+            type: "generate"
+        })
 
-    return res.status(200).json({message: "content generated sucessfully", content: generated_Result});
+        return res.status(200).json({ message: "content generated sucessfully", content: generated_Result });
 
 
 
 
-
-      
     } catch (error) {
         console.error("Error generating content:", error);
         return res.status(500).json({ error: "Failed to generate content" });
     }
 }
 
-const AI = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
+export const Getcontenthistory = async (req , res) => {
+    try {
+        const generatedContent = await content.find({ userId: req.userId })
+            .select("_id Input_prompt generated_content type")
+            .sort({ _id: -1 })
+            .lean();
+
+        return res.status(200).json({
+            message: "Content history loaded successfully",
+            content: generatedContent,
+        });
+    } catch (error) {
+        console.error("Unable to load generated content history:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+
+
+
+
+
+
+const AI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 //const prompt = "Write a short story about a brave knight who saves a village from a dragon.";
 
 
 
 async function generategiminicontent(prompt) {
-  const response = await AI.models.generateContent({
-    model: 'gemini-3.8-flash',
-    contents: prompt,
-  });
-  console.log(response.text);
-  return response.text;
+    const response = await AI.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: prompt,
+    });
+    console.log(response.text);
+    return response.text;
 }
