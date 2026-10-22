@@ -3,17 +3,18 @@ import { Link, useNavigate } from "react-router-dom";
 import paint from '../assets/paint.png';
 import pencil from '../assets/pencil.png';
 import ThemeToggle from "./Themetoggle";
-import Navbar from "./Navbar";
+import Navbar from "../Component/Navbar";
 
 /* ------------------------------------------------------------------
    CONFIG – change these to match your project
 ------------------------------------------------------------------ */
-const API_BASE = import.meta.env?.VITE_API_URL || ""; // CRA: process.env.REACT_APP_API_URL
-const HISTORY_ENDPOINT = `${API_BASE}/api/images/history?limit=8`;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const HISTORY_ENDPOINT = `${API_BASE}/v1/image/history?limit=8`;
 const ROUTES = {
-    image: "/generate-image",
-    content: "/generate-content",
-    history: "/history",
+    image: "/generateimage",
+    content: "/generatecontent",
+    image_history: "/generatedimagehistory",
+    content_history: "/generatedcontenthistory",
 };
 
 /* Map whatever your API returns to { id, url, prompt, createdAt } */
@@ -67,13 +68,35 @@ const ACTIONS = [
         title: "Image History",
         desc: "Browse, preview and reuse everything you've made.",
         cta: "View history",
-        to: ROUTES.history,
+        to: ROUTES.image_history,
         icon: "🕘",
         iconBg: "bg-amber-500/20",
         text: "text-amber-400",
         border: "hover:border-amber-500/60",
         glow: "rgba(245,158,11,0.22)",
     },
+
+
+    {
+        key: "history",
+        title: "Content History",
+        desc: "Browse, preview and reuse everything you've made.",
+        cta: "View history",
+        to: ROUTES.content_history,
+        icon: "🕘",
+        iconBg: "bg-amber-500/20",
+        text: "text-amber-400",
+        border: "hover:border-amber-500/60",
+        glow: "rgba(23,139,11,0.52)",
+    },
+
+
+
+
+
+
+
+
 ];
 
 /* 3D tilt + glow that follows the cursor */
@@ -356,8 +379,8 @@ export default function Home() {
             <section className="mx-auto max-w-6xl px-4 pt-11 sm:px-6 sm:pt-14">
                 <div className="mb-6 flex items-baseline justify-between">
                     <h2 className="text-2xl font-bold">Recent images</h2>
-                    <Link to={ROUTES.history} className="font-semibold text-violet-400 hover:underline">
-                        View all →
+                    <Link to={ROUTES.image_history} className="font-semibold text-violet-400 hover:underline">
+                        View all images →
                     </Link>
                 </div>
                 <RecentImages images={images} loading={loading} error={error} onOpen={setSelected} />

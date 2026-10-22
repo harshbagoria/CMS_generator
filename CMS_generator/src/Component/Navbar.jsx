@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 //import ThemeToggle from "./ThemeToggle";
 import images from '../assets/images.png';
+import { useAuth} from "../Auth/AuthContext.js";
  
 /* ------------------------------------------------------------------
    CONFIG – change these to match your project
 ------------------------------------------------------------------ */
 const ROUTES = {
   home: "/",
-  image: "/generate-image",
-  content: "/generate-content",
-  history: "/history",
+  image: "/generateimage",
+  content: "/generatecontent",
+  image_history: "/generatedimagehistory",
+  content_history: "/generatedcontenthistory",
   login: "/login",
 };
  
@@ -18,18 +20,13 @@ const NAV_LINKS = [
   { label: "Home", to: ROUTES.home, end: true },
   { label: "Images", to: ROUTES.image },
   { label: "Content", to: ROUTES.content },
-  { label: "History", to: ROUTES.history },
+  { label: "History", to: ROUTES.image_history },
+  { label: "Content History", to: ROUTES.content_history },
 ];
  
 /* Reads the logged-in user. Adjust to your auth (context, redux, etc.)
    Expected shape: { name: "Harsh Bhagoria", email: "harsh@mail.com" } */
-function getStoredUser() {
-  try {
-    return JSON.parse(localStorage.getItem("user")) || null;
-  } catch {
-    return null;
-  }
-}
+
  
 /* ------------------------------------------------------------------
    Navbar
@@ -38,13 +35,14 @@ function getStoredUser() {
      user     : { name, email }
      onLogout : () => void
 ------------------------------------------------------------------ */
-export default function Navbar({ user: userProp, onLogout }) {
+export default function Navbar() {
   const navigate = useNavigate();
-  const [user] = useState(() => userProp || getStoredUser());
+  //const [user] = useState(() => userProp || getStoredUser());
   const [open, setOpen] = useState(false); // profile dropdown
   const [menuOpen, setMenuOpen] = useState(false); // mobile menu
   const dropdownRef = useRef(null);
- 
+  const {user , logout} = useAuth();
+
   const name = user?.name?.trim() || "User";
   const initial = name.charAt(0).toUpperCase();
  
@@ -64,13 +62,8 @@ export default function Navbar({ user: userProp, onLogout }) {
  
   const handleLogout = () => {
     setOpen(false);
-    if (onLogout) {
-      onLogout();
-    } else {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-    }
-    navigate(ROUTES.login, { replace: true });
+    logout();
+    navigate(ROUTES.login);
   };
  
   const linkClass = ({ isActive }) =>
@@ -151,7 +144,17 @@ export default function Navbar({ user: userProp, onLogout }) {
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/5"
                 >
-                  🕘 <span>My history</span>
+                  🕘 <span>My image history</span>
+                </Link>
+
+
+                <Link
+                  to={ROUTES.history}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-white/5"
+                >
+                  🕘 <span>My content history</span>
                 </Link>
                 <button
                   type="button"

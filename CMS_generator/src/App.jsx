@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Signup from './Page/Signup';
 import Login from './Page/Login';
 import GenerateImage from './Page/generateimage';
@@ -9,28 +9,25 @@ import Rewrite from './Page/Rewrite';
 import GeneratedImagehistory from './Page/GeneratedImagehistory';
 import Home from './Page/Home';
 import GeneratedContentHistory from './Page/Generatecontenthistory';
-
+import Protectedroutes from './Component/Protectedroutes';
 
 
 export default function App() {
   return (
-   <BrowserRouter>
    <Routes>
     <Route path='/' element  = {<div>home</div>}/>
     
     
-   <Route path="/signup" element={<Signup />} />
+   <Route path="/signup" element={ <Signup />} />
    <Route path="/login" element={<Login />} />
-   <Route path = "/generateimage" element = {<GenerateImage/>}/>
-   <Route path = "/generatecontent" element = {<Rewrite/>}/>
-   <Route path = "/generatedimagehistory" element = {<GeneratedImagehistory/>}/>
-   <Route path = "/generatedcontentHistory" element = {<GeneratedContentHistory/>}/>
-   <Route path  = "/home" element = {<Home/>}/>
+   <Route path = "/generateimage" element = {<Protectedroutes><GenerateImage/></Protectedroutes>}/>
+   <Route path = "/generatecontent" element = {<Protectedroutes><Rewrite/></Protectedroutes>}/>
+   <Route path = "/generatedimagehistory" element = {<Protectedroutes><GeneratedImagehistory/></Protectedroutes>}/>
+   <Route path = "/generatedcontentHistory" element = {<Protectedroutes><GeneratedContentHistory/></Protectedroutes>}/>
+   <Route path  = "/home" element = {<Protectedroutes><Home/></Protectedroutes>}/>
 
   
    </Routes>
-   </BrowserRouter>
   )
 }
-
 
