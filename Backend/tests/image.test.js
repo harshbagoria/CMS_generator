@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { afterEach, test } from "node:test";
 import Image from "../Models/image.js";
-import { generateImage } from "../Controller/image.js";
+import {
+  generateImage,
+  generateImageHistory,
+} from "../Controller/image.js";
 
 const originalFetch = globalThis.fetch;
 const originalSetTimeout = globalThis.setTimeout;
 const originalCreate = Image.create;
+const originalFind = Image.find;
 const originalApiKey = process.env.POLLINATIONS_API_KEY;
 const originalModel = process.env.POLLINATIONS_IMAGE_MODEL;
 
@@ -13,6 +17,7 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
   globalThis.setTimeout = originalSetTimeout;
   Image.create = originalCreate;
+  Image.find = originalFind;
   if (originalApiKey === undefined) {
     delete process.env.POLLINATIONS_API_KEY;
   } else {
@@ -181,4 +186,50 @@ test("aborts Pollinations requests after 120 seconds", async () => {
   });
   const responseBodyTimeout = await invoke({ prompt: "A valid prompt" });
   assert.equal(responseBodyTimeout.statusCode, 504);
+});
+
+test("returns the most recent images for the authenticated user up to the requested limit", async () => {
+  const expectedImages = [{ _id: "newest", imageUrl: "https://example.com/image.png" }];
+  const query = {
+    sort(sortOrder) {
+      assert.deepEqual(sortOrder, { _id: -1 });
+      return this;
+    },
+    limit(limit) {
+      assert.equal(limit, 8);
+      return this;
+    },
+    select(fields) {
+      assert.equal(fields, "_id imageUrl prompt");
+      return this;
+    },
+    lean() {
+      return Promise.resolve(expectedImages);
+    },
+  };
+  Image.find = (filter) => {
+    assert.deepEqual(filter, { userId: "507f1f77bcf86cd799439011" });
+    return query;
+  };
+
+  const response = makeResponse();
+  await generateImageHistory(
+    {
+      query: { limit: "8" },
+      userId: "507f1f77bcf86cd799439011",
+    },
+    response,
+  );
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.body.images, expectedImages);
+});
+
+test("rejects invalid image-history limits", async () => {
+  for (const limit of ["0", "-1", "1.5", "101", "8items"]) {
+    const response = makeResponse();
+    await generateImageHistory({ query: { limit } }, response);
+    assert.equal(response.statusCode, 400);
+    assert.equal(typeof response.body.message, "string");
+  }
 });

@@ -79,9 +79,12 @@ try{
       expiresIn : "17d"
     });
 
-  
+    const userToReturn = {
+      name: user.name,
+      email: user.email
+    };
     
-    res.status(201).json({"message" : "User Login sucessfully", token});
+    res.status(200).json({"message" : "User Login sucessfully", token, user: userToReturn});
   } catch(error){
   console.error("Error in signup controller:", error);
   res.status(500).json({"message": "Internal server error"});

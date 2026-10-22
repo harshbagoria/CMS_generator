@@ -181,10 +181,28 @@ async function requestPollinationsImage({ prompt, size, model, apiKey }) {
 }
 
 export const generateImageHistory = async (req, res) => {
+  const requestedLimit = req.query.limit;
+  let limit;
+
+  if (requestedLimit !== undefined) {
+    if (
+      typeof requestedLimit !== "string" ||
+      !/^[1-9]\d*$/.test(requestedLimit) ||
+      Number(requestedLimit) > 100
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Limit must be a positive integer no greater than 100." });
+    }
+    limit = Number(requestedLimit);
+  }
+
   try {
-    const images = await Image.find({ userId: req.userId })
-      .select("_id imageUrl prompt")
-      .lean();
+    let query = Image.find({ userId: req.userId }).sort({ _id: -1 });
+    if (limit !== undefined) {
+      query = query.limit(limit);
+    }
+    const images = await query.select("_id imageUrl prompt").lean();
     return res.status(200).json({
       message: "image generated successfully",
       images,
