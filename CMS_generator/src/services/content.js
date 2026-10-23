@@ -1,4 +1,4 @@
-import api from "./api";
+import api from "./Api";
 
 export const generateContent =  (Data) =>{
     return  api.post('/v1/content/generate', Data);

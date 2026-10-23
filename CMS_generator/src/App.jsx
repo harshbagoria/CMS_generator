@@ -1,6 +1,6 @@
 
 import React from 'react'
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Signup from './Page/Signup';
 import Login from './Page/Login';
 import GenerateImage from './Page/generateimage';
@@ -15,7 +15,7 @@ import Protectedroutes from './Component/Protectedroutes';
 export default function App() {
   return (
    <Routes>
-    <Route path='/' element  = {<div>home</div>}/>
+    <Route path="/" element={<Navigate to="/home" replace />} />
     
     
    <Route path="/signup" element={ <Signup />} />
@@ -30,4 +30,3 @@ export default function App() {
    </Routes>
   )
 }
-
